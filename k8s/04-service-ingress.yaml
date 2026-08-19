@@ -1,0 +1,38 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sinerfin-wallet
+  namespace: sinerfin
+  labels:
+    app: sinerfin-wallet
+spec:
+  selector:
+    app: sinerfin-wallet
+  ports:
+    - port: 80
+      targetPort: 8000
+      name: http
+
+---
+# Ingress para k3s con Traefik (incluido por defecto en k3s)
+# Acceso: http://wallet.sinergy.local
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sinerfin-wallet
+  namespace: sinerfin
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  rules:
+    - host: wallet.sinergy.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sinerfin-wallet
+                port:
+                  number: 80

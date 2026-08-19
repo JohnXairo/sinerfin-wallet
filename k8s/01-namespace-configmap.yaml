@@ -1,0 +1,22 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sinerfin
+  labels:
+    app.kubernetes.io/part-of: sinerfin
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wallet-config
+  namespace: sinerfin
+data:
+  SINERFIN_BASE_URL:        "http://192.168.1.190:8080/sinerfin2-1.0"
+  REDIS_HOST:               "192.168.1.190"
+  REDIS_PORT:               "6379"
+  REDIS_DB:                 "1"
+  KAFKA_BOOTSTRAP_SERVERS:  "192.168.1.190:9092"
+  DEBUG:                    "false"
+  CORS_ORIGINS:             '["*"]'

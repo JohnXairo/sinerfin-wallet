@@ -1,0 +1,63 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sinerfin-wallet
+  namespace: sinerfin
+  labels:
+    app: sinerfin-wallet
+    version: "1.0"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: sinerfin-wallet
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: sinerfin-wallet
+        version: "1.0"
+      annotations:
+        # Instana autodiscovery
+        instana.io/service-name: "sinerfin-wallet"
+    spec:
+      containers:
+        - name: wallet
+          image: sinerfin-wallet:latest
+          imagePullPolicy: IfNotPresent  # para k3s local (sin registry externo)
+          ports:
+            - containerPort: 8000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: wallet-config
+            - secretRef:
+                name: wallet-secrets
+          # Liveness: si falla, k3s reinicia el pod
+          livenessProbe:
+            httpGet:
+              path: /live
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            failureThreshold: 3
+          # Readiness: si falla, k3s deja de mandarle tráfico
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu:    "100m"
+            limits:
+              memory: "512Mi"
+              cpu:    "500m"

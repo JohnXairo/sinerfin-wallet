@@ -3,6 +3,7 @@ import base64
 import secrets
 from io import BytesIO
 from datetime import datetime, timezone
+from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db.database import get_db
@@ -95,7 +96,7 @@ async def recargar(
 
     # Acreditar en wallet
     ref = secrets.token_hex(4).upper()
-    wallet.saldo += req.monto
+    wallet.saldo += Decimal(str(req.monto))
     db.add(Transaccion(
         wallet_id=wallet.id, tipo="RECARGA", monto=req.monto,
         descripcion=f"Recarga desde sinerfin ({req.motor})",
@@ -129,7 +130,7 @@ async def pagar(
             f"Saldo insuficiente en wallet. Disponible: ${wallet.saldo:.2f}")
 
     ref = secrets.token_hex(4).upper()
-    wallet.saldo -= req.monto
+    wallet.saldo -= Decimal(str(req.monto))
     db.add(Transaccion(
         wallet_id=wallet.id, tipo="PAGO", monto=req.monto,
         descripcion=req.concepto, referencia=ref, estado="COMPLETADA"
@@ -172,7 +173,7 @@ async def transferir(
     ref = secrets.token_hex(4).upper()
 
     # Debitar origen
-    wallet_origen.saldo -= req.monto
+    wallet_origen.saldo -= Decimal(str(req.monto))
     db.add(Transaccion(
         wallet_id=wallet_origen.id, tipo="TRANSFERENCIA", monto=req.monto,
         descripcion=req.descripcion or f"Transferencia a {destino.nombre}",
@@ -180,7 +181,7 @@ async def transferir(
     ))
 
     # Acreditar destino
-    wallet_destino.saldo += req.monto
+    wallet_destino.saldo += Decimal(str(req.monto))
     db.add(Transaccion(
         wallet_id=wallet_destino.id, tipo="TRANSFERENCIA", monto=req.monto,
         descripcion=f"Transferencia de {usuario.nombre}",

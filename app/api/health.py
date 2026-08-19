@@ -30,12 +30,16 @@ async def health():
     except Exception:
         pass
 
+    # Kafka: verifica si el producer singleton está inicializado
+    from app.services import kafka_service as _ks
+    kafka_ok = _ks._producer is not None
+
     return HealthResponse(
         app="sinerfin-wallet",
         version="1.0.0",
         timestamp=datetime.now(timezone.utc).isoformat(),
         redis="UP" if redis_ok else "DOWN",
-        kafka="UP",          # fire-and-forget, siempre UP desde la app
+        kafka="UP" if kafka_ok else "DOWN",
         sinerfin2="UP" if sinerfin_ok else "DOWN",
         database="UP" if db_ok else "DOWN",
     )

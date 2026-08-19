@@ -18,30 +18,49 @@ echo ""
 
 # ── 1. Verificar k3s ─────────────────────────────────────────
 echo "[1/5] Verificando k3s..."
-kubectl version --client --short 2>/dev/null || {
+kubectl version --client 2>/dev/null || {
     echo "ERROR: kubectl no encontrado. Instala k3s primero:"
     echo "  curl -sfL https://get.k3s.io | sh -"
     exit 1
 }
 echo "OK"
 
-# ── 2. Build de la imagen Docker ──────────────────────────────
-echo "[2/5] Construyendo imagen Docker..."
+# ── 2. Build de la imagen ─────────────────────────────────────
+echo "[2/5] Construyendo imagen..."
 cd "$APP_DIR"
-docker build -t "$IMAGE" . || {
-    # Si no hay Docker, intentar con nerdctl (containerd nativo de k3s)
-    echo "Docker no encontrado, intentando con nerdctl..."
-    nerdctl build -t "$IMAGE" .
-}
-echo "OK - imagen $IMAGE construida"
 
-# ── 3. Importar imagen en k3s (si se usa containerd) ─────────
-echo "[3/5] Importando imagen en k3s containerd..."
-if command -v k3s &>/dev/null; then
-    docker save "$IMAGE" | k3s ctr images import - 2>/dev/null \
-        && echo "OK - imagen importada en containerd" \
-        || echo "AVISO: import manual no necesario (Docker socket disponible)"
+if command -v docker &>/dev/null; then
+    echo "Usando Docker..."
+    docker build -t "$IMAGE" .
+    echo "OK - imagen construida con Docker"
+elif command -v podman &>/dev/null; then
+    echo "Usando Podman..."
+    podman build -t "$IMAGE" .
+    echo "OK - imagen construida con Podman"
+elif command -v buildah &>/dev/null; then
+    echo "Usando Buildah..."
+    buildah bud -t "$IMAGE" .
+    echo "OK - imagen construida con Buildah"
+else
+    echo "ERROR: No se encontró Docker, Podman ni Buildah."
+    echo "Instala uno de ellos:"
+    echo "  dnf install -y podman    # RHEL/CentOS/Fedora"
+    echo "  apt install -y podman    # Debian/Ubuntu"
+    exit 1
 fi
+
+# ── 3. Importar imagen en k3s containerd ─────────────────────
+echo "[3/5] Importando imagen en k3s containerd..."
+if command -v docker &>/dev/null; then
+    docker save "$IMAGE" | k3s ctr images import -
+elif command -v podman &>/dev/null; then
+    podman save --format oci-archive "$IMAGE" | k3s ctr images import -
+elif command -v buildah &>/dev/null; then
+    buildah push "$IMAGE" oci-archive:/tmp/wallet-image.tar
+    k3s ctr images import /tmp/wallet-image.tar
+    rm -f /tmp/wallet-image.tar
+fi
+echo "OK - imagen importada en containerd"
 
 # ── 4. Aplicar manifiestos ────────────────────────────────────
 echo "[4/5] Aplicando manifiestos k8s..."

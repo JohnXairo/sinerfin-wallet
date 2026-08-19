@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.models.models import Usuario, Wallet
-from app.core.security import hash_password, verify_password, create_access_token
+from app.core.security import hash_password, verify_password, create_access_token, get_current_user
 from app.api.schemas import RegisterRequest, LoginRequest, TokenResponse
 from app.services import kafka_service
 
@@ -76,9 +76,7 @@ async def login(req: LoginRequest, db: Session = Depends(get_db)):
 
 
 @router.get("/me")
-async def me(db: Session = Depends(get_db),
-             usuario: Usuario = Depends(__import__('app.core.security',
-                fromlist=['get_current_user']).get_current_user)):
+async def me(usuario: Usuario = Depends(get_current_user)):
     return {
         "username": usuario.username,
         "nombre":   usuario.nombre,

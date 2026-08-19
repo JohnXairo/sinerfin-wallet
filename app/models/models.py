@@ -1,7 +1,12 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, Numeric, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import relationship, DeclarativeBase
-from datetime import datetime
+from datetime import datetime, timezone
 import enum
+
+
+def _utcnow():
+    """Timestamp UTC con zona horaria explícita (datetime.utcnow está deprecado en Python 3.12)."""
+    return datetime.now(timezone.utc)
 
 
 class Base(DeclarativeBase):
@@ -16,11 +21,11 @@ class EstadoTransaccion(str, enum.Enum):
 
 
 class TipoTransaccion(str, enum.Enum):
-    RECARGA      = "RECARGA"       # cargar saldo a la wallet desde sinerfin
-    PAGO         = "PAGO"          # pagar con wallet
-    TRANSFERENCIA = "TRANSFERENCIA" # wallet a wallet
-    RETIRO       = "RETIRO"        # retirar a cuenta sinerfin
-    QR_COBRO     = "QR_COBRO"      # cobro via QR
+    RECARGA       = "RECARGA"        # cargar saldo a la wallet desde sinerfin
+    PAGO          = "PAGO"           # pagar con wallet
+    TRANSFERENCIA = "TRANSFERENCIA"  # wallet a wallet
+    RETIRO        = "RETIRO"         # retirar a cuenta sinerfin
+    QR_COBRO      = "QR_COBRO"       # cobro via QR
 
 
 class Usuario(Base):
@@ -33,7 +38,7 @@ class Usuario(Base):
     nombre         = Column(String(150), nullable=False)
     cedula         = Column(String(20), unique=True, nullable=False)  # vincula con sinerfin2
     activo         = Column(Boolean, default=True)
-    creado_en      = Column(DateTime, default=datetime.utcnow)
+    creado_en      = Column(DateTime(timezone=True), default=_utcnow)
 
     wallet         = relationship("Wallet", back_populates="usuario", uselist=False)
 
@@ -43,10 +48,11 @@ class Wallet(Base):
 
     id             = Column(Integer, primary_key=True, autoincrement=True)
     usuario_id     = Column(Integer, ForeignKey("wallet_usuarios.id"), unique=True)
-    saldo          = Column(Float, default=0.0, nullable=False)
+    # Numeric(18,2): evita errores de redondeo en punto flotante para dinero
+    saldo          = Column(Numeric(18, 2), default=0, nullable=False)
     activa         = Column(Boolean, default=True)
-    creado_en      = Column(DateTime, default=datetime.utcnow)
-    actualizado_en = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    creado_en      = Column(DateTime(timezone=True), default=_utcnow)
+    actualizado_en = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     usuario        = relationship("Usuario", back_populates="wallet")
     transacciones  = relationship("Transaccion", back_populates="wallet")
@@ -58,11 +64,12 @@ class Transaccion(Base):
     id             = Column(Integer, primary_key=True, autoincrement=True)
     wallet_id      = Column(Integer, ForeignKey("wallets.id"), nullable=False)
     tipo           = Column(String(20), nullable=False)
-    monto          = Column(Float, nullable=False)
+    # Numeric(18,2): precisión exacta en centavos
+    monto          = Column(Numeric(18, 2), nullable=False)
     descripcion    = Column(String(200))
     referencia     = Column(String(50))          # codigo de autorizacion
     cedula_destino = Column(String(20))          # para transferencias
     estado         = Column(String(20), default="COMPLETADA")
-    creado_en      = Column(DateTime, default=datetime.utcnow)
+    creado_en      = Column(DateTime(timezone=True), default=_utcnow)
 
     wallet         = relationship("Wallet", back_populates="transacciones")

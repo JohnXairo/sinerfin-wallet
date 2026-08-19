@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from pydantic import field_validator
 from functools import lru_cache
 
 
@@ -7,12 +8,14 @@ class Settings(BaseSettings):
     app_name: str = "Sinerfin Wallet"
     app_version: str = "1.0.0"
     debug: bool = False
-    secret_key: str = "sinerfin-wallet-secret-key-change-in-prod"
+
+    # JWT — obligatorio en producción: openssl rand -hex 32
+    secret_key: str
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
 
-    # Base de datos (PostgreSQL)
-    database_url: str = "postgresql://sinerfin:SinergyPass2026.@192.168.1.192:5432/sinerfin_wallet"
+    # Base de datos (PostgreSQL) — obligatorio
+    database_url: str
 
     # Redis
     redis_host: str = "192.168.1.190"
@@ -28,8 +31,20 @@ class Settings(BaseSettings):
     sinerfin_base_url: str = "http://192.168.1.190:8080/sinerfin2-1.0"
     sinerfin_timeout: int = 10
 
-    # CORS
-    cors_origins: list[str] = ["*"]
+    # CORS — separar por comas en la variable de entorno:
+    # CORS_ORIGINS='["http://wallet.sinergy.local","https://wallet.sinergy.com"]'
+    # Para desarrollo local se puede dejar ["*"]
+    cors_origins: list[str] = ["http://wallet.sinergy.local"]
+
+    @field_validator("secret_key")
+    @classmethod
+    def secret_key_no_vacio(cls, v: str) -> str:
+        if not v or len(v) < 16:
+            raise ValueError(
+                "SECRET_KEY debe tener al menos 16 caracteres. "
+                "Genera una con: openssl rand -hex 32"
+            )
+        return v
 
     class Config:
         env_file = ".env"

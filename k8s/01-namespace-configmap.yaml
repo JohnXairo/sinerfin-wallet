@@ -21,3 +21,7 @@ data:
   DEBUG:                    "false"
   # Producción: reemplazar con dominio real, ej: '["http://wallet.sinergy.local"]'
   CORS_ORIGINS:             '["http://wallet.sinergy.local"]'
+  # Instana — el agente corre en el nodo, el SDK se conecta a él
+  INSTANA_AGENT_HOST:       "192.168.1.191"   # IP del nodo k3s donde corre el agente
+  INSTANA_AGENT_PORT:       "42699"
+  INSTANA_SERVICE_NAME:     "sinerfin-wallet"

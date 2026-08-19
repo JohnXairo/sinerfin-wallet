@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
 import os
 
@@ -13,11 +14,9 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: crear tablas si no existen
     create_tables()
     print(f"sinerfin-wallet {settings.app_version} iniciado")
     yield
-    # Shutdown
     print("sinerfin-wallet detenido")
 
 
@@ -39,12 +38,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Routers
+# Routers API
 app.include_router(auth.router)
 app.include_router(wallet.router)
 app.include_router(health.router)
 
-# Servir frontend React (si existe el build)
-frontend_path = os.path.join(os.path.dirname(__file__), "frontend", "dist")
-if os.path.exists(frontend_path):
-    app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
+# Servir frontend
+static_path = os.path.join(os.path.dirname(__file__), "static")
+if os.path.exists(static_path):
+    app.mount("/static", StaticFiles(directory=static_path), name="static")
+
+    @app.get("/", include_in_schema=False)
+    async def frontend():
+        return FileResponse(os.path.join(static_path, "index.html"))

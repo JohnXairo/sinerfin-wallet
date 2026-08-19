@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sinerfin Wallet</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0a0f1e;
+      --surface:  #111827;
+      --card:     #1a2235;
+      --border:   #2a3550;
+      --accent:   #3b82f6;
+      --accent2:  #6366f1;
+      --green:    #10b981;
+      --red:      #ef4444;
+      --yellow:   #f59e0b;
+      --text:     #f1f5f9;
+      --muted:    #94a3b8;
+      --radius:   12px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* ── Auth ─────────────────────────────────────────── */
+    #auth-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .auth-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 36px 32px;
+      width: 100%;
+      max-width: 400px;
+    }
+    .auth-logo {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .auth-logo h1 { font-size: 22px; font-weight: 700; color: var(--accent); }
+    .auth-logo p  { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+    .auth-tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--card);
+      border-radius: 8px;
+      padding: 4px;
+      margin-bottom: 24px;
+    }
+    .auth-tab {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .auth-tab.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    /* ── Forms ────────────────────────────────────────── */
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
+    .form-group input, .form-group select {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .15s, transform .1s;
+      text-decoration: none;
+    }
+    .btn:active { transform: scale(.98); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-primary  { background: var(--accent);  color: #fff; }
+    .btn-success  { background: var(--green);   color: #fff; }
+    .btn-danger   { background: var(--red);      color: #fff; }
+    .btn-ghost    { background: var(--card);     color: var(--text); border: 1px solid var(--border); }
+    .btn-full     { width: 100%; }
+
+    .error-msg { background: #450a0a; border: 1px solid var(--red); border-radius: 8px; padding: 10px 12px; color: #fca5a5; font-size: 13px; margin-bottom: 14px; }
+    .success-msg { background: #052e16; border: 1px solid var(--green); border-radius: 8px; padding: 10px 12px; color: #6ee7b7; font-size: 13px; margin-bottom: 14px; }
+
+    /* ── App layout ───────────────────────────────────── */
+    #app-screen { display: none; flex-direction: column; min-height: 100vh; }
+
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .topbar-brand { font-size: 16px; font-weight: 700; color: var(--accent); }
+    .topbar-user  { display: flex; align-items: center; gap: 10px; }
+    .topbar-user span { color: var(--muted); font-size: 13px; }
+    .avatar {
+      width: 32px; height: 32px;
+      background: var(--accent2);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 13px;
+    }
+
+    .main { display: flex; flex: 1; }
+
+    .sidebar {
+      width: 220px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .15s;
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+    }
+    .nav-item:hover  { background: var(--card); color: var(--text); }
+    .nav-item.active { background: var(--accent); color: #fff; }
+    .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+    .content { flex: 1; padding: 24px; overflow-y: auto; }
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ── Cards ────────────────────────────────────────── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .card-title { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; font-weight: 600; margin-bottom: 8px; }
+
+    .saldo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+    .saldo-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .saldo-card .label { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8px; }
+    .saldo-card .amount { font-size: 28px; font-weight: 700; }
+    .saldo-card .amount.wallet  { color: var(--accent); }
+    .saldo-card .amount.sinerfin { color: var(--green); }
+    .saldo-card .sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    .actions-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+    .action-btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .15s;
+      color: var(--text);
+    }
+    .action-btn:hover { border-color: var(--accent); background: #1e2d4a; }
+    .action-btn .icon { font-size: 24px; margin-bottom: 6px; }
+    .action-btn .label { font-size: 12px; font-weight: 600; }
+
+    /* ── Historial ────────────────────────────────────── */
+    .tx-list { display: flex; flex-direction: column; gap: 8px; }
+    .tx-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+    .tx-icon {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .tx-icon.RECARGA      { background: #052e16; }
+    .tx-icon.PAGO         { background: #450a0a; }
+    .tx-icon.TRANSFERENCIA { background: #1e1b4b; }
+    .tx-icon.RETIRO       { background: #451a03; }
+    .tx-info { flex: 1; }
+    .tx-info .desc  { font-size: 13px; font-weight: 600; }
+    .tx-info .date  { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .tx-amount { font-size: 15px; font-weight: 700; }
+    .tx-amount.pos { color: var(--green); }
+    .tx-amount.neg { color: var(--red); }
+    .tx-ref { font-size: 10px; color: var(--muted); margin-top: 2px; text-align: right; }
+
+    /* ── QR ───────────────────────────────────────────── */
+    .qr-container { text-align: center; padding: 20px; }
+    .qr-container img { border-radius: 12px; max-width: 240px; border: 4px solid var(--border); }
+    .qr-info { margin-top: 16px; font-size: 13px; color: var(--muted); }
+
+    /* ── Badge estado ─────────────────────────────────── */
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .badge-ok   { background: #052e16; color: #6ee7b7; }
+    .badge-down { background: #450a0a; color: #fca5a5; }
+
+    /* ── Loading spinner ──────────────────────────────── */
+    .spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Page title ───────────────────────────────────── */
+    .page-title { font-size: 20px; font-weight: 700; margin-bottom: 20px; }
+
+    /* ── Responsive ───────────────────────────────────── */
+    @media (max-width: 640px) {
+      .sidebar { display: none; }
+      .saldo-grid { grid-template-columns: 1fr; }
+      .actions-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ PANTALLA LOGIN / REGISTRO ══════════════════════════════ -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <h1>💳 Sinerfin Wallet</h1>
+      <p>Billetera digital conectada a sinerfin2</p>
+    </div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')">Iniciar sesión</button>
+      <button class="auth-tab" onclick="switchAuthTab('register')">Registrarse</button>
+    </div>
+
+    <div id="auth-error" class="error-msg" style="display:none"></div>
+
+    <!-- Login -->
+    <form id="login-form" onsubmit="doLogin(event)">
+      <div class="form-group">
+        <label>Usuario</label>
+        <input type="text" id="login-username" placeholder="tu_usuario" required />
+      </div>
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" id="login-password" placeholder="••••••••" required />
+      </div>
+      <button type="submit" class="btn btn-primary btn-full" id="login-btn">
+        Entrar
+      </button>
+    </form>
+
+    <!-- Registro -->
+    <form id="register-form" style="display:none" onsubmit="doRegister(event)">
+      <div class="form-group">
+        <label>Nombre completo</label>
+        <input type="text" id="reg-nombre" placeholder="Juan Pérez" required />
+      </div>
+      <div class="form-group">
+        <label>Cédula</label>
+        <input type="text" id="reg-cedula" placeholder="1234567890" required />
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="reg-email" placeholder="juan@correo.com" required />
+      </div>
+      <div class="form-group">
+        <label>Usuario</label>
+        <input type="text" id="reg-username" placeholder="juan123" required />
+      </div>
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" id="reg-password" placeholder="Mínimo 8 caracteres" required minlength="8" />
+      </div>
+      <button type="submit" class="btn btn-primary btn-full" id="register-btn">
+        Crear cuenta
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- ══ APP PRINCIPAL ══════════════════════════════════════════ -->
+<div id="app-screen">
+  <!-- Topbar -->
+  <div class="topbar">
+    <span class="topbar-brand">💳 Sinerfin Wallet</span>
+    <div class="topbar-user">
+      <span id="topbar-nombre">-</span>
+      <div class="avatar" id="topbar-avatar">?</div>
+      <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px" onclick="logout()">Salir</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <button class="nav-item active" onclick="showPage('dashboard')">
+        <span class="nav-icon">🏠</span> Inicio
+      </button>
+      <button class="nav-item" onclick="showPage('recargar')">
+        <span class="nav-icon">⬆️</span> Recargar
+      </button>
+      <button class="nav-item" onclick="showPage('pagar')">
+        <span class="nav-icon">💸</span> Pagar
+      </button>
+      <button class="nav-item" onclick="showPage('transferir')">
+        <span class="nav-icon">↔️</span> Transferir
+      </button>
+      <button class="nav-item" onclick="showPage('historial')">
+        <span class="nav-icon">📋</span> Historial
+      </button>
+      <button class="nav-item" onclick="showPage('qr')">
+        <span class="nav-icon">📷</span> Mi QR
+      </button>
+    </div>
+
+    <!-- Contenido -->
+    <div class="content">
+
+      <!-- ── DASHBOARD ─────────────────────────────────── -->
+      <div id="page-dashboard" class="page active">
+        <div class="page-title">Mi Wallet</div>
+
+        <div class="saldo-grid">
+          <div class="saldo-card">
+            <div class="label">Saldo Wallet</div>
+            <div class="amount wallet" id="saldo-wallet">$-.--</div>
+            <div class="sub">Disponible para pagar y transferir</div>
+          </div>
+          <div class="saldo-card">
+            <div class="label">Saldo sinerfin2</div>
+            <div class="amount sinerfin" id="saldo-sinerfin">$-.--</div>
+            <div class="sub" id="cuenta-sinerfin">Cuenta: -</div>
+          </div>
+        </div>
+
+        <div class="actions-grid">
+          <div class="action-btn" onclick="showPage('recargar')">
+            <div class="icon">⬆️</div>
+            <div class="label">Recargar</div>
+          </div>
+          <div class="action-btn" onclick="showPage('pagar')">
+            <div class="icon">💸</div>
+            <div class="label">Pagar</div>
+          </div>
+          <div class="action-btn" onclick="showPage('transferir')">
+            <div class="icon">↔️</div>
+            <div class="label">Transferir</div>
+          </div>
+          <div class="action-btn" onclick="showPage('qr')">
+            <div class="icon">📷</div>
+            <div class="label">Mi QR</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Últimas transacciones</div>
+          <div id="tx-preview" class="tx-list">
+            <div style="color:var(--muted);font-size:13px;padding:12px 0">Cargando...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── RECARGAR ───────────────────────────────────── -->
+      <div id="page-recargar" class="page">
+        <div class="page-title">Recargar Wallet</div>
+        <div class="card" style="max-width:460px">
+          <p style="color:var(--muted);font-size:13px;margin-bottom:18px">
+            Mueve dinero desde tu cuenta sinerfin2 hacia tu wallet.
+          </p>
+          <div id="recargar-msg"></div>
+          <form onsubmit="doRecargar(event)">
+            <div class="form-group">
+              <label>Monto a recargar ($)</label>
+              <input type="number" id="recargar-monto" min="0.01" step="0.01" placeholder="0.00" required />
+            </div>
+            <div class="form-group">
+              <label>Motor de BD</label>
+              <select id="recargar-motor">
+                <option value="POSTGRES">PostgreSQL</option>
+                <option value="ORACLE">Oracle</option>
+              </select>
+            </div>
+            <div style="display:flex;gap:10px">
+              <button type="submit" class="btn btn-success btn-full" id="recargar-btn">
+                Recargar
+              </button>
+              <button type="button" class="btn btn-ghost" onclick="showPage('dashboard')">Cancelar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- ── PAGAR ──────────────────────────────────────── -->
+      <div id="page-pagar" class="page">
+        <div class="page-title">Realizar Pago</div>
+        <div class="card" style="max-width:460px">
+          <div style="margin-bottom:14px">
+            <span style="color:var(--muted);font-size:13px">Saldo disponible: </span>
+            <strong id="pagar-saldo-disp" style="color:var(--accent)">$-.--</strong>
+          </div>
+          <div id="pagar-msg"></div>
+          <form onsubmit="doPagar(event)">
+            <div class="form-group">
+              <label>Concepto</label>
+              <input type="text" id="pagar-concepto" placeholder="Descripción del pago" required />
+            </div>
+            <div class="form-group">
+              <label>Monto ($)</label>
+              <input type="number" id="pagar-monto" min="0.01" step="0.01" placeholder="0.00" required />
+            </div>
+            <div style="display:flex;gap:10px">
+              <button type="submit" class="btn btn-danger btn-full" id="pagar-btn">
+                Pagar
+              </button>
+              <button type="button" class="btn btn-ghost" onclick="showPage('dashboard')">Cancelar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- ── TRANSFERIR ─────────────────────────────────── -->
+      <div id="page-transferir" class="page">
+        <div class="page-title">Transferir</div>
+        <div class="card" style="max-width:460px">
+          <div style="margin-bottom:14px">
+            <span style="color:var(--muted);font-size:13px">Saldo disponible: </span>
+            <strong id="transferir-saldo-disp" style="color:var(--accent)">$-.--</strong>
+          </div>
+          <div id="transferir-msg"></div>
+          <form onsubmit="doTransferir(event)">
+            <div class="form-group">
+              <label>Cédula del destinatario</label>
+              <input type="text" id="transferir-cedula" placeholder="0987654321" required />
+            </div>
+            <div class="form-group">
+              <label>Monto ($)</label>
+              <input type="number" id="transferir-monto" min="0.01" step="0.01" placeholder="0.00" required />
+            </div>
+            <div class="form-group">
+              <label>Descripción (opcional)</label>
+              <input type="text" id="transferir-desc" placeholder="Pago deuda, etc." />
+            </div>
+            <div style="display:flex;gap:10px">
+              <button type="submit" class="btn btn-primary btn-full" id="transferir-btn">
+                Transferir
+              </button>
+              <button type="button" class="btn btn-ghost" onclick="showPage('dashboard')">Cancelar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- ── HISTORIAL ──────────────────────────────────── -->
+      <div id="page-historial" class="page">
+        <div class="page-title">Historial de Transacciones</div>
+        <div id="historial-list" class="tx-list">
+          <div style="color:var(--muted);font-size:13px;padding:12px 0">Cargando...</div>
+        </div>
+      </div>
+
+      <!-- ── QR ─────────────────────────────────────────── -->
+      <div id="page-qr" class="page">
+        <div class="page-title">Mi QR de Cobro</div>
+        <div class="card" style="max-width:400px">
+          <div class="form-group">
+            <label>Monto a cobrar (opcional)</label>
+            <input type="number" id="qr-monto" min="0.01" step="0.01" placeholder="Dejar vacío para QR libre" />
+          </div>
+          <button class="btn btn-primary btn-full" onclick="generarQR()" id="qr-btn">
+            Generar QR
+          </button>
+          <div id="qr-result" style="margin-top:20px"></div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app-screen -->
+
+<script>
+  // ── Config ──────────────────────────────────────────────────
+  // Si el frontend se sirve desde la misma app FastAPI, la API está en /
+  const API = '';
+  let token = localStorage.getItem('wallet_token') || '';
+  let userData = JSON.parse(localStorage.getItem('wallet_user') || '{}');
+
+  // ── Arranque ────────────────────────────────────────────────
+  window.addEventListener('DOMContentLoaded', () => {
+    if (token) {
+      showApp();
+    }
+  });
+
+  // ── Auth tabs ───────────────────────────────────────────────
+  function switchAuthTab(tab) {
+    document.querySelectorAll('.auth-tab').forEach((b, i) => {
+      b.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
+    });
+    document.getElementById('login-form').style.display    = tab === 'login'    ? '' : 'none';
+    document.getElementById('register-form').style.display = tab === 'register' ? '' : 'none';
+    document.getElementById('auth-error').style.display = 'none';
+  }
+
+  // ── Login ───────────────────────────────────────────────────
+  async function doLogin(e) {
+    e.preventDefault();
+    const btn = document.getElementById('login-btn');
+    btn.innerHTML = '<span class="spinner"></span> Entrando...';
+    btn.disabled = true;
+    hideAuthError();
+    try {
+      const res = await apiFetch('/api/auth/login', 'POST', {
+        username: document.getElementById('login-username').value,
+        password: document.getElementById('login-password').value,
+      });
+      saveSession(res);
+      showApp();
+    } catch (err) {
+      showAuthError(err.message);
+    } finally {
+      btn.innerHTML = 'Entrar';
+      btn.disabled = false;
+    }
+  }
+
+  // ── Registro ────────────────────────────────────────────────
+  async function doRegister(e) {
+    e.preventDefault();
+    const btn = document.getElementById('register-btn');
+    btn.innerHTML = '<span class="spinner"></span> Creando cuenta...';
+    btn.disabled = true;
+    hideAuthError();
+    try {
+      const res = await apiFetch('/api/auth/register', 'POST', {
+        username: document.getElementById('reg-username').value,
+        password: document.getElementById('reg-password').value,
+        email:    document.getElementById('reg-email').value,
+        nombre:   document.getElementById('reg-nombre').value,
+        cedula:   document.getElementById('reg-cedula').value,
+      });
+      saveSession(res);
+      showApp();
+    } catch (err) {
+      showAuthError(err.message);
+    } finally {
+      btn.innerHTML = 'Crear cuenta';
+      btn.disabled = false;
+    }
+  }
+
+  function saveSession(data) {
+    token = data.access_token;
+    userData = { nombre: data.nombre, cedula: data.cedula, saldo: data.saldo_wallet };
+    localStorage.setItem('wallet_token', token);
+    localStorage.setItem('wallet_user', JSON.stringify(userData));
+  }
+
+  function logout() {
+    token = '';
+    userData = {};
+    localStorage.removeItem('wallet_token');
+    localStorage.removeItem('wallet_user');
+    document.getElementById('app-screen').style.display = 'none';
+    document.getElementById('auth-screen').style.display = 'flex';
+  }
+
+  // ── Mostrar app ──────────────────────────────────────────────
+  function showApp() {
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app-screen').style.display  = 'flex';
+    document.getElementById('topbar-nombre').textContent = userData.nombre || '';
+    document.getElementById('topbar-avatar').textContent = (userData.nombre || '?')[0].toUpperCase();
+    loadDashboard();
+  }
+
+  // ── Navegación ───────────────────────────────────────────────
+  function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    const navMap = { dashboard:'Inicio', recargar:'Recargar', pagar:'Pagar', transferir:'Transferir', historial:'Historial', qr:'Mi QR' };
+    document.querySelectorAll('.nav-item').forEach(n => {
+      if (n.textContent.trim().includes(navMap[name])) n.classList.add('active');
+    });
+    if (name === 'historial') loadHistorial();
+    if (name === 'dashboard') loadDashboard();
+    if (name === 'pagar' || name === 'transferir') updateSaldoDisp();
+  }
+
+  // ── Dashboard ────────────────────────────────────────────────
+  async function loadDashboard() {
+    try {
+      const data = await apiFetch('/api/wallet/saldo');
+      document.getElementById('saldo-wallet').textContent   = fmt(data.saldo_wallet);
+      document.getElementById('saldo-sinerfin').textContent = fmt(data.saldo_sinerfin);
+      document.getElementById('cuenta-sinerfin').textContent = 'Cuenta: ' + (data.cuenta_sinerfin || '-');
+      userData.saldo = data.saldo_wallet;
+      updateSaldoDisp();
+    } catch (e) {
+      document.getElementById('saldo-wallet').textContent = 'Error';
+    }
+    loadTxPreview();
+  }
+
+  async function loadTxPreview() {
+    try {
+      const txs = await apiFetch('/api/wallet/historial?limit=5');
+      renderTxList('tx-preview', txs, true);
+    } catch (e) {}
+  }
+
+  function updateSaldoDisp() {
+    const s = fmt(userData.saldo || 0);
+    const d1 = document.getElementById('pagar-saldo-disp');
+    const d2 = document.getElementById('transferir-saldo-disp');
+    if (d1) d1.textContent = s;
+    if (d2) d2.textContent = s;
+  }
+
+  // ── Historial ────────────────────────────────────────────────
+  async function loadHistorial() {
+    document.getElementById('historial-list').innerHTML =
+      '<div style="color:var(--muted);font-size:13px;padding:12px 0">Cargando...</div>';
+    try {
+      const txs = await apiFetch('/api/wallet/historial?limit=50');
+      renderTxList('historial-list', txs, false);
+    } catch (e) {
+      document.getElementById('historial-list').innerHTML =
+        '<div class="error-msg">Error cargando historial</div>';
+    }
+  }
+
+  function renderTxList(containerId, txs, mini) {
+    const el = document.getElementById(containerId);
+    if (!txs || txs.length === 0) {
+      el.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:12px 0">Sin transacciones aún</div>';
+      return;
+    }
+    const icons = { RECARGA: '⬆️', PAGO: '💸', TRANSFERENCIA: '↔️', RETIRO: '⬇️', QR_COBRO: '📷' };
+    const positivas = ['RECARGA'];
+    el.innerHTML = txs.map(tx => `
+      <div class="tx-item">
+        <div class="tx-icon ${tx.tipo}">${icons[tx.tipo] || '💳'}</div>
+        <div class="tx-info">
+          <div class="desc">${tx.descripcion || tx.tipo}</div>
+          <div class="date">${fmtDate(tx.creado_en)}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="tx-amount ${positivas.includes(tx.tipo) ? 'pos' : 'neg'}">
+            ${positivas.includes(tx.tipo) ? '+' : '-'}${fmt(tx.monto)}
+          </div>
+          ${!mini ? `<div class="tx-ref">#${tx.referencia || '-'} · <span class="badge badge-ok">${tx.estado}</span></div>` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ── Recargar ─────────────────────────────────────────────────
+  async function doRecargar(e) {
+    e.preventDefault();
+    const btn = document.getElementById('recargar-btn');
+    btn.innerHTML = '<span class="spinner"></span> Procesando...';
+    btn.disabled = true;
+    document.getElementById('recargar-msg').innerHTML = '';
+    try {
+      const res = await apiFetch('/api/wallet/recargar', 'POST', {
+        monto: parseFloat(document.getElementById('recargar-monto').value),
+        motor: document.getElementById('recargar-motor').value,
+      });
+      userData.saldo = res.saldo_wallet;
+      document.getElementById('recargar-msg').innerHTML =
+        `<div class="success-msg">✅ ${res.mensaje} · Ref: <strong>${res.referencia}</strong></div>`;
+      document.getElementById('recargar-monto').value = '';
+      loadDashboard();
+    } catch (err) {
+      document.getElementById('recargar-msg').innerHTML =
+        `<div class="error-msg">❌ ${err.message}</div>`;
+    } finally {
+      btn.innerHTML = 'Recargar';
+      btn.disabled = false;
+    }
+  }
+
+  // ── Pagar ────────────────────────────────────────────────────
+  async function doPagar(e) {
+    e.preventDefault();
+    const btn = document.getElementById('pagar-btn');
+    btn.innerHTML = '<span class="spinner"></span> Procesando...';
+    btn.disabled = true;
+    document.getElementById('pagar-msg').innerHTML = '';
+    try {
+      const res = await apiFetch('/api/wallet/pagar', 'POST', {
+        concepto: document.getElementById('pagar-concepto').value,
+        monto:    parseFloat(document.getElementById('pagar-monto').value),
+      });
+      userData.saldo = res.saldo_wallet;
+      document.getElementById('pagar-msg').innerHTML =
+        `<div class="success-msg">✅ ${res.mensaje} · Ref: <strong>${res.referencia}</strong></div>`;
+      document.getElementById('pagar-concepto').value = '';
+      document.getElementById('pagar-monto').value = '';
+      updateSaldoDisp();
+      loadDashboard();
+    } catch (err) {
+      document.getElementById('pagar-msg').innerHTML =
+        `<div class="error-msg">❌ ${err.message}</div>`;
+    } finally {
+      btn.innerHTML = 'Pagar';
+      btn.disabled = false;
+    }
+  }
+
+  // ── Transferir ───────────────────────────────────────────────
+  async function doTransferir(e) {
+    e.preventDefault();
+    const btn = document.getElementById('transferir-btn');
+    btn.innerHTML = '<span class="spinner"></span> Procesando...';
+    btn.disabled = true;
+    document.getElementById('transferir-msg').innerHTML = '';
+    try {
+      const res = await apiFetch('/api/wallet/transferir', 'POST', {
+        cedula_destino: document.getElementById('transferir-cedula').value,
+        monto:          parseFloat(document.getElementById('transferir-monto').value),
+        descripcion:    document.getElementById('transferir-desc').value || undefined,
+      });
+      userData.saldo = res.saldo_wallet;
+      document.getElementById('transferir-msg').innerHTML =
+        `<div class="success-msg">✅ ${res.mensaje} · Ref: <strong>${res.referencia}</strong></div>`;
+      document.getElementById('transferir-cedula').value = '';
+      document.getElementById('transferir-monto').value  = '';
+      document.getElementById('transferir-desc').value   = '';
+      updateSaldoDisp();
+      loadDashboard();
+    } catch (err) {
+      document.getElementById('transferir-msg').innerHTML =
+        `<div class="error-msg">❌ ${err.message}</div>`;
+    } finally {
+      btn.innerHTML = 'Transferir';
+      btn.disabled = false;
+    }
+  }
+
+  // ── QR ───────────────────────────────────────────────────────
+  async function generarQR() {
+    const btn = document.getElementById('qr-btn');
+    btn.innerHTML = '<span class="spinner"></span> Generando...';
+    btn.disabled = true;
+    document.getElementById('qr-result').innerHTML = '';
+    try {
+      const monto = document.getElementById('qr-monto').value;
+      const url   = '/api/wallet/qr' + (monto ? '?monto=' + monto : '');
+      const res   = await apiFetch(url);
+      document.getElementById('qr-result').innerHTML = `
+        <div class="qr-container">
+          <img src="data:image/png;base64,${res.qr_base64}" alt="QR de cobro" />
+          <div class="qr-info">
+            <strong>${res.nombre}</strong><br>
+            Cédula: ${res.cedula}
+            ${res.monto ? `<br>Monto: <strong>${fmt(res.monto)}</strong>` : ''}
+          </div>
+        </div>`;
+    } catch (err) {
+      document.getElementById('qr-result').innerHTML =
+        `<div class="error-msg">❌ ${err.message}</div>`;
+    } finally {
+      btn.innerHTML = 'Generar QR';
+      btn.disabled = false;
+    }
+  }
+
+  // ── Helpers ──────────────────────────────────────────────────
+  async function apiFetch(path, method = 'GET', body = null) {
+    const opts = {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+    };
+    if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+    if (body)  opts.body = JSON.stringify(body);
+
+    const res  = await fetch(API + path, opts);
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      const msg = data.detail || data.mensaje || `Error ${res.status}`;
+      throw new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
+    }
+    return data;
+  }
+
+  function fmt(n) {
+    return '$' + parseFloat(n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '-';
+    const d = new Date(iso);
+    return d.toLocaleDateString('es', { day:'2-digit', month:'short', year:'numeric' }) +
+           ' ' + d.toLocaleTimeString('es', { hour:'2-digit', minute:'2-digit' });
+  }
+
+  function showAuthError(msg) {
+    const el = document.getElementById('auth-error');
+    el.textContent = msg;
+    el.style.display = '';
+  }
+  function hideAuthError() {
+    document.getElementById('auth-error').style.display = 'none';
+  }
+</script>
+</body>
+</html>

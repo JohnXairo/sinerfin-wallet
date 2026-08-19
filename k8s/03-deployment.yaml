@@ -28,8 +28,8 @@ spec:
     spec:
       containers:
         - name: wallet
-          image: sinerfin-wallet:latest
-          imagePullPolicy: IfNotPresent  # para k3s local (sin registry externo)
+          image: localhost/sinerfin-wallet:latest
+          imagePullPolicy: Never  # imagen local en containerd, nunca intentar pull externo
           ports:
             - containerPort: 8000
               name: http

@@ -38,6 +38,13 @@ spec:
                 name: wallet-config
             - secretRef:
                 name: wallet-secrets
+          env:
+            # Instana Operator DaemonSet: el agente corre en el mismo nodo que el pod
+            # El SDK necesita el IP del nodo para conectarse al agente
+            - name: INSTANA_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
           # Liveness: si falla, k3s reinicia el pod
           livenessProbe:
             httpGet:

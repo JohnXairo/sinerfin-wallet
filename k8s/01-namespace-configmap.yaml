@@ -17,6 +17,7 @@ data:
   REDIS_HOST:               "192.168.1.190"
   REDIS_PORT:               "6379"
   REDIS_DB:                 "1"
+  REDIS_PASSWORD:           "SinergyPass2026."
   KAFKA_BOOTSTRAP_SERVERS:  "192.168.1.190:9092"
   DEBUG:                    "false"
   # Producción: reemplazar con dominio real, ej: '["http://wallet.sinergy.local"]'

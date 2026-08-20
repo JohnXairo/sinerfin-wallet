@@ -10,12 +10,13 @@ _pool: redis.ConnectionPool | None = None
 def get_redis() -> redis.Redis:
     global _pool
     if _pool is None:
-        settings = get_settings()
+        # Leer directamente del entorno para evitar el lru_cache de settings
+        import os
         _pool = redis.ConnectionPool(
-            host=settings.redis_host,
-            port=settings.redis_port,
-            db=settings.redis_db,
-            password=settings.redis_password or None,
+            host=os.environ.get("REDIS_HOST", "192.168.1.190"),
+            port=int(os.environ.get("REDIS_PORT", 6379)),
+            db=int(os.environ.get("REDIS_DB", 1)),
+            password=os.environ.get("REDIS_PASSWORD") or None,
             decode_responses=True,
             max_connections=20,
             socket_connect_timeout=2,

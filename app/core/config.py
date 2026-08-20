@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     redis_host: str = "192.168.1.190"
     redis_port: int = 6379
     redis_db: int = 1  # DB 1 para wallet (DB 0 la usa sinerfin2)
+    redis_password: str = ""  # dejar vacío si Redis no tiene contraseña
 
     # Kafka
     kafka_bootstrap_servers: str = "192.168.1.190:9092"

@@ -16,6 +16,13 @@ settings = get_settings()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     create_tables()
+    # Inicializar pool Redis en arranque para que tome las variables de entorno correctas
+    from app.services.redis_service import get_redis
+    try:
+        get_redis().ping()
+        print("Redis conectado OK")
+    except Exception as e:
+        print(f"Redis no disponible al arrancar: {e}")
     print(f"sinerfin-wallet {settings.app_version} iniciado")
     yield
     print("sinerfin-wallet detenido")

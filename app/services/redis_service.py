@@ -2,21 +2,25 @@ import redis
 import json
 from app.core.config import get_settings
 
-settings = get_settings()
-
-# Pool de conexiones Redis - DB 1 (sinerfin2 usa DB 0)
-_pool = redis.ConnectionPool(
-    host=settings.redis_host,
-    port=settings.redis_port,
-    db=settings.redis_db,
-    decode_responses=True,
-    max_connections=20,
-    socket_connect_timeout=2,
-    socket_timeout=2,
-)
+# Pool lazy — se crea la primera vez que se usa, no al importar el módulo
+# Así toma las variables de entorno ya resueltas por k3s
+_pool: redis.ConnectionPool | None = None
 
 
 def get_redis() -> redis.Redis:
+    global _pool
+    if _pool is None:
+        settings = get_settings()
+        _pool = redis.ConnectionPool(
+            host=settings.redis_host,
+            port=settings.redis_port,
+            db=settings.redis_db,
+            password=settings.redis_password or None,
+            decode_responses=True,
+            max_connections=20,
+            socket_connect_timeout=2,
+            socket_timeout=2,
+        )
     return redis.Redis(connection_pool=_pool)
 
 

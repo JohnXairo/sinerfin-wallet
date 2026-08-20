@@ -1,6 +1,6 @@
 fastapi==0.115.0
 uvicorn[standard]==0.30.6
-instana==2.6.2
+instana==3.17.0
 pydantic==2.8.2
 pydantic[email]==2.8.2
 pydantic-settings==2.4.0

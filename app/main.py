@@ -1,4 +1,4 @@
-import instana  # debe importarse primero para instrumentar automáticamente
+import instana  # noqa: F401  — debe importarse primero para auto-instrumentar
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles

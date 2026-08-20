@@ -701,22 +701,25 @@
       return;
     }
     const icons = { RECARGA: '⬆️', PAGO: '💸', TRANSFERENCIA: '↔️', RETIRO: '⬇️', QR_COBRO: '📷' };
-    const positivas = ['RECARGA'];
-    el.innerHTML = txs.map(tx => `
-      <div class="tx-item">
-        <div class="tx-icon ${tx.tipo}">${icons[tx.tipo] || '💳'}</div>
-        <div class="tx-info">
-          <div class="desc">${tx.descripcion || tx.tipo}</div>
-          <div class="date">${fmtDate(tx.creado_en)}</div>
-        </div>
-        <div style="text-align:right">
-          <div class="tx-amount ${positivas.includes(tx.tipo) ? 'pos' : 'neg'}">
-            ${positivas.includes(tx.tipo) ? '+' : '-'}${fmt(tx.monto)}
+    el.innerHTML = txs.map(tx => {
+      // Entrante: recarga, o transferencia recibida (descripción empieza con "Transferencia de")
+      const esEntrada = tx.tipo === 'RECARGA' ||
+        (tx.tipo === 'TRANSFERENCIA' && tx.descripcion && tx.descripcion.startsWith('Transferencia de'));
+      const signo = esEntrada ? '+' : '-';
+      const clase  = esEntrada ? 'pos' : 'neg';
+      return `
+        <div class="tx-item">
+          <div class="tx-icon ${tx.tipo}">${icons[tx.tipo] || '💳'}</div>
+          <div class="tx-info">
+            <div class="desc">${tx.descripcion || tx.tipo}</div>
+            <div class="date">${fmtDate(tx.creado_en)}</div>
           </div>
-          ${!mini ? `<div class="tx-ref">#${tx.referencia || '-'} · <span class="badge badge-ok">${tx.estado}</span></div>` : ''}
-        </div>
-      </div>
-    `).join('');
+          <div style="text-align:right">
+            <div class="tx-amount ${clase}">${signo}${fmt(tx.monto)}</div>
+            ${!mini ? `<div class="tx-ref">#${tx.referencia || '-'} · <span class="badge badge-ok">${tx.estado}</span></div>` : ''}
+          </div>
+        </div>`;
+    }).join('');
   }
 
   // ── Recargar ─────────────────────────────────────────────────

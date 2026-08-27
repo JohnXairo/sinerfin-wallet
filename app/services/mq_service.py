@@ -1,9 +1,11 @@
 """
 Publica solicitudes a IBM MQ desde sinerfin-wallet.
+Usa la REST API de IBM MQ (puerto 9443) — no requiere librerías nativas ni pymqi.
+La REST API viene incluida en IBM MQ 10.0 sin configuración adicional.
 
 Cola destino: SINERFIN.RECARGA.REQUEST
-Queue Manager: SINERFIN  (bus.sinergy.local:1414)
-Canal: DEV.APP.SVRCONN
+Queue Manager: SINERFIN  (bus.sinergy.local)
+Endpoint: PUT https://bus.sinergy.local:9443/ibmmq/rest/v2/messaging/qmgr/SINERFIN/queue/SINERFIN.RECARGA.REQUEST/message
 
 Diseño fire-and-forget idéntico a kafka_service.py:
 si MQ no está disponible la operación continúa sin interrupciones.
@@ -13,52 +15,52 @@ import json
 import threading
 from datetime import datetime, timezone
 
+import httpx
+
 from app.core.config import get_settings
 
 settings = get_settings()
 
-_mq_available = True  # se pone en False si la conexión inicial falla
+_mq_available = True
 
 
 def _publicar(queue_name: str, payload: dict):
-    """Envío a MQ en thread separado — nunca bloquea el request."""
+    """Envío a MQ vía REST API en thread separado — nunca bloquea el request."""
     global _mq_available
 
     def _send():
         global _mq_available
         try:
-            import pymqi  # import diferido: no rompe el arranque si pymqi no está
-            conn_info = f"{settings.mq_host}({settings.mq_port})"
-            cd = pymqi.CD()
-            cd.ChannelName = settings.mq_channel.encode()
-            cd.ConnectionName = conn_info.encode()
-            cd.ChannelType = pymqi.CMQC.MQCHT_CLNTCONN
-            cd.TransportType = pymqi.CMQC.MQXPT_TCP
-
-            qmgr = pymqi.QueueManager(None)
-            qmgr.connectWithOptions(
-                settings.mq_queue_manager,
-                cd=cd,
-                opts=pymqi.CMQC.MQCNO_CLIENT_BINDING
+            url = (
+                f"https://{settings.mq_host}:{settings.mq_rest_port}"
+                f"/ibmmq/rest/v2/messaging/qmgr/{settings.mq_queue_manager}"
+                f"/queue/{queue_name}/message"
             )
+            body = json.dumps(payload, ensure_ascii=False)
 
-            queue = pymqi.Queue(qmgr, queue_name)
-            md = pymqi.MD()
-            md.Format = pymqi.CMQC.MQFMT_STRING
-            md.CodedCharSetId = 1208  # UTF-8
+            # Autenticación básica con usuario mqm o el que se configure
+            auth = None
+            if settings.mq_user:
+                auth = (settings.mq_user, settings.mq_password)
 
-            body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
-            queue.put(body, md)
-            queue.close()
-            qmgr.disconnect()
+            with httpx.Client(verify=False, timeout=5) as client:
+                r = client.post(
+                    url,
+                    content=body.encode("utf-8"),
+                    headers={
+                        "Content-Type": "text/plain;charset=utf-8",
+                        "ibm-mq-rest-csrf-token": "",   # header requerido por MQ REST API
+                    },
+                    auth=auth,
+                )
+                if r.status_code in (201, 204):
+                    _mq_available = True
+                else:
+                    print(f"MQ REST error [{queue_name}] HTTP {r.status_code}: {r.text}")
 
-            _mq_available = True
-
-        except ImportError:
-            print("pymqi no instalado — evento MQ no publicado")
         except Exception as e:
             _mq_available = False
-            print(f"MQ error [{queue_name}]: {e}")
+            print(f"MQ REST error [{queue_name}]: {e}")
 
     threading.Thread(target=_send, daemon=True).start()
 
@@ -67,7 +69,7 @@ def publicar_recarga_request(
     cedula: str, nombre: str, monto: float, motor: str = "POSTGRES"
 ):
     """
-    Publica una solicitud de recarga a SINERFIN.RECARGA.REQUEST.
+    Publica una solicitud de recarga a SINERFIN.RECARGA.REQUEST via REST API.
     sinerfin2 (Java/JBoss) consume esta cola y procesa el retiro de la cuenta bancaria.
     """
     _publicar(settings.mq_queue_recarga, {

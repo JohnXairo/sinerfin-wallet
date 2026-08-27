@@ -33,10 +33,10 @@ class Settings(BaseSettings):
     sinerfin_timeout: int = 10
 
     # IBM MQ — bus.sinergy.local (192.168.1.186)
+    # Usa REST API (puerto 9443) — no requiere librerías nativas
     mq_host: str = "bus.sinergy.local"
-    mq_port: int = 1414
+    mq_rest_port: int = 9443
     mq_queue_manager: str = "SINERFIN"
-    mq_channel: str = "DEV.APP.SVRCONN"
     mq_user: str = ""
     mq_password: str = ""
     mq_queue_recarga: str = "SINERFIN.RECARGA.REQUEST"

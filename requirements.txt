@@ -17,3 +17,5 @@ alembic==1.13.2
 python-dotenv==1.0.1
 qrcode[pil]==8.0
 Pillow==10.4.0
+# IBM MQ client (requiere librería nativa MQ instalada en el host/contenedor)
+pymqi==1.12.10

@@ -82,7 +82,7 @@ async def recargar(
     except Exception as e:
         raise HTTPException(502, f"Error consultando sinerfin2: {e}")
 
-    # Debitar de sinerfin2
+    # Debitar de sinerfin2 (REST directo)
     try:
         tx = await sinerfin_client.registrar_transaccion(
             usuario.cedula, usuario.nombre, "RETIRO", req.monto, req.motor
@@ -93,6 +93,12 @@ async def recargar(
         raise
     except Exception as e:
         raise HTTPException(502, f"Error en sinerfin2: {e}")
+
+    # Notificar a sinerfin2 también vía IBM MQ (genera trace distribuido en Instana)
+    from app.services import mq_service
+    mq_service.publicar_recarga_request(
+        usuario.cedula, usuario.nombre, req.monto, req.motor
+    )
 
     # Acreditar en wallet
     ref = secrets.token_hex(4).upper()

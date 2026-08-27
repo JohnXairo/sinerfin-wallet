@@ -32,6 +32,15 @@ class Settings(BaseSettings):
     sinerfin_base_url: str = "http://192.168.1.190:8080/sinerfin2-1.0"
     sinerfin_timeout: int = 10
 
+    # IBM MQ — bus.sinergy.local (192.168.1.186)
+    mq_host: str = "bus.sinergy.local"
+    mq_port: int = 1414
+    mq_queue_manager: str = "SINERFIN"
+    mq_channel: str = "DEV.APP.SVRCONN"
+    mq_user: str = ""
+    mq_password: str = ""
+    mq_queue_recarga: str = "SINERFIN.RECARGA.REQUEST"
+
     # CORS — separar por comas en la variable de entorno:
     # CORS_ORIGINS='["http://wallet.sinergy.local","https://wallet.sinergy.com"]'
     # Para desarrollo local se puede dejar ["*"]

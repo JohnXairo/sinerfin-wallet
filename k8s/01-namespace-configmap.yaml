@@ -26,3 +26,9 @@ data:
   # El SDK usa el IP del nodo (spec.nodeName) automáticamente via downward API
   INSTANA_AGENT_PORT:       "42699"
   INSTANA_SERVICE_NAME:     "sinerfin-wallet"
+  # IBM MQ — bus.sinergy.local (192.168.1.186) IBM MQ 10.0 LTS
+  MQ_HOST:                  "bus.sinergy.local"
+  MQ_PORT:                  "1414"
+  MQ_QUEUE_MANAGER:         "SINERFIN"
+  MQ_CHANNEL:               "DEV.APP.SVRCONN"
+  MQ_QUEUE_RECARGA:         "SINERFIN.RECARGA.REQUEST"

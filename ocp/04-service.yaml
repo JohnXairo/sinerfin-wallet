@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sinerfin-wallet
+  namespace: sinerfin
+  labels:
+    app: sinerfin-wallet
+spec:
+  selector:
+    app: sinerfin-wallet
+  ports:
+    - port: 80
+      targetPort: 8000
+      name: http
+      protocol: TCP

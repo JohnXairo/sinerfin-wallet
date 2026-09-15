@@ -1,0 +1,12 @@
+---
+# ImageStream: registry interno de RHOS donde vive la imagen compilada
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: sinerfin-wallet
+  namespace: sinerfin
+  labels:
+    app: sinerfin-wallet
+spec:
+  lookupPolicy:
+    local: false

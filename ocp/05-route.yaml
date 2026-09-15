@@ -1,0 +1,23 @@
+---
+# Route: equivalente OpenShift del Ingress
+# Acceso: http://wallet.sinergy.local  (o el dominio de tu cluster RHOS)
+# RHOS genera automaticamente: wallet-sinerfin.apps.<cluster-domain>
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: sinerfin-wallet
+  namespace: sinerfin
+  labels:
+    app: sinerfin-wallet
+spec:
+  host: wallet.sinergy.local
+  to:
+    kind: Service
+    name: sinerfin-wallet
+    weight: 100
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None

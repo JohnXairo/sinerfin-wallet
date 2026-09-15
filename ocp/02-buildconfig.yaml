@@ -1,0 +1,35 @@
+---
+# BuildConfig: compila la imagen directamente en OpenShift desde el repo GitHub
+# No necesitas Docker local ni CI/CD externo.
+# oc start-build sinerfin-wallet --follow
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: sinerfin-wallet
+  namespace: sinerfin
+  labels:
+    app: sinerfin-wallet
+spec:
+  source:
+    type: Git
+    git:
+      uri: https://github.com/JohnXairo/sinerfin-wallet.git
+      ref: main
+    # Si el repo es privado, crear primero:
+    # oc create secret generic github-secret --from-literal=password=TU_TOKEN
+    # sourceSecret:
+    #   name: github-secret
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: Dockerfile
+      # ubi9/python-312 ya está en el Dockerfile, RHOS la descarga del registry Red Hat
+  output:
+    to:
+      kind: ImageStreamTag
+      name: sinerfin-wallet:latest
+  triggers:
+    - type: ConfigChange
+    - type: GitHub
+      github:
+        secret: webhook-secret

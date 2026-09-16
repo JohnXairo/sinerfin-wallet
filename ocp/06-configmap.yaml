@@ -1,0 +1,23 @@
+---
+# ConfigMap para OpenShift 4.22
+# Las IPs de servicios externos (Redis, Kafka, sinerfin2, MQ)
+# se configuran aqui — el Secret maneja DATABASE_URL y SECRET_KEY
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wallet-config
+  namespace: sinerfin
+  labels:
+    app: sinerfin-wallet
+data:
+  SINERFIN_BASE_URL:       "http://192.168.1.190:8080/sinerfin2-1.0"
+  REDIS_HOST:              "192.168.1.190"
+  REDIS_PORT:              "6379"
+  REDIS_DB:                "1"
+  KAFKA_BOOTSTRAP_SERVERS: "192.168.1.190:9092"
+  MQ_HOST:                 "bus.sinergy.local"
+  MQ_REST_PORT:            "9443"
+  MQ_QUEUE_MANAGER:        "SINERFIN"
+  MQ_QUEUE_RECARGA:        "SINERFIN.RECARGA.REQUEST"
+  DEBUG:                   "false"
+  CORS_ORIGINS:            '["https://wallet.sinergy.local","http://wallet.sinergy.local"]'

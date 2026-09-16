@@ -1,0 +1,62 @@
+---
+# NetworkPolicy: principio de minimo privilegio para RHOS
+# El pod wallet solo acepta trafico del router de OpenShift
+# y puede salir a las IPs de los servicios externos
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: sinerfin-wallet-netpol
+  namespace: sinerfin
+spec:
+  podSelector:
+    matchLabels:
+      app: sinerfin-wallet
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Permitir trafico del router OpenShift (ingress controller)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: openshift-ingress
+    # Permitir health checks del kubelet
+    - ports:
+        - port: 8000
+  egress:
+    # sinerfin2 JBoss
+    - to:
+        - ipBlock:
+            cidr: 192.168.1.190/32
+      ports:
+        - port: 8080
+    # PostgreSQL
+    - to:
+        - ipBlock:
+            cidr: 192.168.1.192/32
+      ports:
+        - port: 5432
+    # Redis
+    - to:
+        - ipBlock:
+            cidr: 192.168.1.190/32
+      ports:
+        - port: 6379
+    # Kafka
+    - to:
+        - ipBlock:
+            cidr: 192.168.1.190/32
+      ports:
+        - port: 9092
+    # IBM MQ REST API
+    - to:
+        - ipBlock:
+            cidr: 192.168.1.186/32
+      ports:
+        - port: 9443
+    # DNS
+    - ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP

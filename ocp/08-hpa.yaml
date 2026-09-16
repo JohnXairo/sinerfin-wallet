@@ -1,0 +1,28 @@
+---
+# HPA: escala automaticamente entre 2 y 6 pods segun CPU
+# En demos de Instana puedes generar carga y ver el autoscaling en vivo
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: sinerfin-wallet
+  namespace: sinerfin
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: sinerfin-wallet
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
